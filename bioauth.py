@@ -2,6 +2,13 @@ import base64
 import os
 import pickle
 
+from enrollment import (
+    authorize_application,
+    enroll_user,
+    login_application,
+    revoke_application,
+)
+
 
 ## Load program state from file
 state_file = 'state.txt'
@@ -27,34 +34,36 @@ def dump_state(state):
 
 state = load_state()
 if state is None:
-    state = {}
+    state = {
+        'users': {},
+        'applications': {},
+    }
 
 
 ## Main program command loop
-cmd = None
-
-def dummy_enroll(arg1, arg2, *args):
-    print 'first arg is {}'.format(arg1)
-    print 'second arg is {}'.format(arg2)
+cmd = ['']
 
 command_mapping = {
-    'enroll': dummy_enroll,
+    'enroll': enroll_user,
+    'authorize_app': authorize_application,
+    'login_app': login_application,
+    'revoke_app': revoke_application,
 }
 
 def print_help():
     print '#### Please use one of following commands ####'
     print '    enroll <user_name> <template_path>'
-    print '    add_app <user_name> <application>'
-    print '    remove_app <user_name> <application>'
-    print '    verify_app <user_name> <application> <template_path>'
+    print '    authorize_app <user_name> <application>'
+    print '    revoke_app <user_name> <application>'
+    print '    login_app <user_name> <application> <template_path>'
     print '##############################################'
 
-while cmd != 'quit':
+while cmd[0] != 'quit':
     cmd = raw_input('enter a command: ')
     cmd = cmd.split()
     try:
         func = command_mapping[cmd[0]]
-        func(*cmd[1:])
+        state = func(state, *cmd[1:])
     except KeyError:
         print_help()
 
